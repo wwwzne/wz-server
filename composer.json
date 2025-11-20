@@ -2,9 +2,6 @@
     "name": "wwwzne/wz-server",
     "description": "后端框架",
     "type": "library",
-    "require-dev": {
-        "pestphp/pest": "4.x-dev"
-    },
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -18,10 +15,5 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {},
-    "config": {
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
-    }
+    "require": {}
 }
