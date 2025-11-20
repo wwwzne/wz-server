@@ -1,5 +1,5 @@
 {
-    "name": "wwwzne/server",
+    "name": "wwwzne/wz-server",
     "description": "后端框架",
     "type": "library",
     "require-dev": {
@@ -8,7 +8,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Wwwzne\\Server\\": "src/"
+            "Wwwzne\\WzServer\\": "src/"
         }
     },
     "authors": [
