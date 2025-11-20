@@ -1,0 +1,27 @@
+{
+    "name": "wwwzne/server",
+    "description": "后端框架",
+    "type": "library",
+    "require-dev": {
+        "pestphp/pest": "4.x-dev"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Wwwzne\\Server\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "wwwzne",
+            "email": "3466389208@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
