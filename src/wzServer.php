@@ -25,93 +25,32 @@ $author = trim("
   d888P         d888   Y8888b   d0888b       
 d888888888888   d888    Y888b   d088888888889
 ");
-const _404_ = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户访问的页面不存在</title>
-    <style>html{width:100%;height:100%}*{user-select:none}</style>
-</head>
-<body style="width:100%;height:100%;margin:0;padding:0;display:grid;place-items:center">
-    <h1 style="font-size:5em;font-family:'Comic Sans MS',sans-serif;color:red">
-        error:404
-    </h1>
-</body>
-</html>
-HTML;
+
 abstract class Tools
 {
-    /*返回错误页面*/
-    public static function error(int $code)
-    {
-        return [
-            "404" => _404_
-        ][$code];
-    }
-    /*发送http-get请求*/
-    public static function httpGet(string $url): string
-    {
-        $url = trim($url);
-        $opts = ['http' => ['method' => 'GET', 'timeout' => 10]];
-        $context = stream_context_create($opts);
-        $body = @file_get_contents($url, false, $context);
-        return $body === false ? '' : htmlentities($body);
-    }
-    /*发送http-post请求*/
-    public static function httpPost(string $url, array $data = [], array $headers = []): string
-    {
-        $url = trim($url);
-
-        $content =  http_build_query($data);
-        $hdrs = [
-            'User-Agent: WzServer/1.0',
-            'Content-Type: application/x-www-form-urlencoded',
-            'Content-Length: ' . \strlen($content),
-        ];
-        foreach ($headers as $k => $v) $hdrs[] = \is_int($k) ? $v : "{$k}: {$v}";
-        $opts = [
-            'http' => [
-                'method'  => 'POST',
-                'header'  => implode("\r\n", $hdrs) . "\r\n",
-                'content' => $content,
-                'timeout' => 10,
-            ],
-        ];
-        $context = stream_context_create($opts);
-        $body = @file_get_contents($url, false, $context);
-        return $body === false ? '' : htmlentities($body);
-    }
-    /*判断字符串开头是否为post*/
+    //! 判断字符串开头是否为post
     public static function post_start(string $i)
     {
         if (\strlen($i) < 4) return false;
         return strtolower(substr($i, 0, 4)) === "post";
     }
-    /*判断字符串开头是否为get*/
+    //! 判断字符串开头是否为get
     public static function get_start(string $i)
     {
         if (\strlen($i) < 3) return false;
         return strtolower(substr($i, 0, 3)) === 'get';
     }
-    /*判断字符串开头是否为get|post*/
+    //! 判断字符串开头是否为get|post
     public static function get_post_start(string $i)
     {
         if (\strlen($i) < 8) return false;
         return strtolower(substr($i, 0, 8)) === 'get|post';
     }
-    /*判断字符串开头是否为post|get*/
+    //! 判断字符串开头是否为post|get
     public static function post_get_start(string $i)
     {
         if (\strlen($i) < 8) return false;
         return strtolower(substr($i, 0, 8)) === 'post|get';
-    }
-
-    /*打印bool值*/
-    public static function echo_bool(bool|int $i)
-    {
-        echo $i ? "true" : "false" . PHP_EOL;
     }
 };
 /**
@@ -123,64 +62,6 @@ enum DatabaseType: string
     case PGSQL  = 'pgsql';
     case SQLITE = 'sqlite';
 }
-
-$Wz_config = new class {
-    /**
-     * PDO对象
-     * @var 
-     */
-    private ?PDO $instance = null;
-    /**
-     * 数据库类型
-     * @var 
-     */
-    private ?DatabaseType $type = null;
-    /**
-     * 构造函数
-     */
-    public function __construct() {}
-    /**
-     * 数据库连接
-     * @param string $name 数据库名
-     * @param DatabaseType $type 数据库类型
-     * @param mixed $dsn 数据库链接信息
-     * @param mixed $user 用户名
-     * @param mixed $psw 密码
-     * @return PDO|null PDO对象
-     */
-    public function connect(string $name, DatabaseType $type = DatabaseType::MYSQL, ?string $dsn = null, ?string $user = null, ?string $psw = null): PDO
-    {
-        if ($this->instance !== null) return $this->instance;
-        $this->type = $type;
-        $dsn  ??= (getenv('DB_DSN') ?: [
-            DatabaseType::PGSQL->value => "pgsql:host=127.0.0.1;port=5432;dbname={$name}",
-            DatabaseType::SQLITE->value => "",
-            DatabaseType::MYSQL->value => "mysql:host=127.0.0.1;port=3306;dbname={$name};charset=utf8mb4",
-        ][$type->value]);
-        $user ??=  (getenv('DB_USER') ?: 'root');
-        $psw ??=  (getenv('DB_PASS') ?: 'root');
-        $opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false];
-        try {
-            $this->instance = new PDO($dsn, $user, $psw, $opts);
-            return $this->instance;
-        } catch (PDOException $e) {
-            // 开发时直接抛出，生产环境可改为记录日志并抛出或返回 null
-            throw $e;
-        }
-    }
-    /**
-     * 获取PDO对象
-     * @return PDO|null
-     */
-    public function getInstance(): ?PDO
-    {
-        return $this->instance;
-    }
-    public function getDriverType(): string
-    {
-        return $this->type->value;
-    }
-};
 final class Model
 {
     public string $tableName = "";
@@ -220,11 +101,18 @@ final class View
         return (string) ob_get_clean();
     }
 }
-class Controller
+final class Controller
 {
-    final protected function render(string $template, array $data = [])
+    private string $template = "";
+    private array $data = [];
+    public function __construct(string $template, array $data)
     {
-        return new View($template)->render($data);
+        $this->template = $template;
+        $this->$data = $data;
+    }
+    private function render(string $template, array $data = [])
+    {
+        return new View($this->template)->render($this->data);
     }
 }
 final class Router //路由控制器
@@ -281,7 +169,7 @@ final class Router //路由控制器
         $this->_postRegexRoutes[] = ['pattern' => $pattern, 'handler' => $fn];
     }
 
-    public function __construct(array $i = [])
+    public function __construct(array $i)
     {
         $this->define($i);
     }
@@ -319,7 +207,7 @@ final class Router //路由控制器
     {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-        $fn = fn() => Tools::error(404);
+        $fn = fn() => wzServer::error(404);
         $matches = [];
         if ($method === 'GET') {
             foreach (array_reverse($this->_getRegexRoutes) as $r) {
@@ -348,5 +236,120 @@ final class Router //路由控制器
     public function __tostring()
     {
         return $this->_page;
+    }
+}
+//! 挂载
+final class wzServer
+{
+    //! 404错误信息
+    private static $_404 = <<<HTML
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>用户访问的页面不存在</title>
+            <style>html{width:100%;height:100%}*{user-select:none}</style>
+        </head>
+        <body style="width:100%;height:100%;margin:0;padding:0;display:grid;place-items:center">
+            <h1 style="font-size:5em;font-family:'Comic Sans MS',sans-serif;color:red">
+                error:404
+            </h1>
+        </body>
+        </html>
+        HTML;
+    //! PDO对象
+    private static ?PDO $instance = null;
+    //! 数据库类型
+    private static ?DatabaseType $type = null;
+    private function __construct() {}
+    private function __clone() {}
+    public static function router(array $i = [])
+    {
+        return new Router($i);
+    }
+    public static function controller(string $template = "", array $data = [])
+    {
+        return new Controller($template, $data);
+    }
+    //! 返回错误页面
+    public static function error(int $code)
+    {
+        return [
+            "404" => self::$_404
+        ][$code];
+    }
+    //! 改变错误页面
+    public static function changeError(int $code, string $i)
+    {
+        if ($code === "404") self::$_404 = $i;
+    }
+    //! 发送http-get请求
+    public static function httpGet(string $url): string
+    {
+        $url = trim($url);
+        $opts = ['http' => ['method' => 'GET', 'timeout' => 10]];
+        $context = stream_context_create($opts);
+        $body = @file_get_contents($url, false, $context);
+        return $body === false ? '' : htmlentities($body);
+    }
+    //! 发送http-post请求
+    public static function httpPost(string $url, array $data = [], array $headers = []): string
+    {
+        $url = trim($url);
+        $content =  http_build_query($data);
+        $hdrs = [
+            'User-Agent: WzServer/1.0',
+            'Content-Type: application/x-www-form-urlencoded',
+            'Content-Length: ' . \strlen($content),
+        ];
+        foreach ($headers as $k => $v) $hdrs[] = \is_int($k) ? $v : "{$k}: {$v}";
+        $opts = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => implode("\r\n", $hdrs) . "\r\n",
+                'content' => $content,
+                'timeout' => 10,
+            ],
+        ];
+        $context = stream_context_create($opts);
+        $body = @file_get_contents($url, false, $context);
+        return $body === false ? '' : htmlentities($body);
+    }
+    //! 数据库链接
+    public static function connect(string $name, DatabaseType $type = DatabaseType::MYSQL, ?string $dsn = null, ?string $user = null, ?string $psw = null): PDO
+    {
+        if (self::$instance !== null) return self::$instance;
+        self::$type = $type;
+        $dsn  ??= (getenv('DB_DSN') ?: [
+            DatabaseType::PGSQL->value => "pgsql:host=127.0.0.1;port=5432;dbname={$name}",
+            DatabaseType::SQLITE->value => "",
+            DatabaseType::MYSQL->value => "mysql:host=127.0.0.1;port=3306;dbname={$name};charset=utf8mb4",
+        ][$type->value]);
+        $user ??=  (getenv('DB_USER') ?: 'root');
+        $psw ??=  (getenv('DB_PASS') ?: 'root');
+        $opts = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false];
+        try {
+            self::$instance = new PDO($dsn, $user, $psw, $opts);
+            return self::$instance;
+        } catch (PDOException $e) {
+            // 开发时直接抛出，生产环境可改为记录日志并抛出或返回 null
+            throw $e;
+        }
+    }
+    //! 获取数据库链接实例
+    public static function getInstance(): ?PDO
+    {
+        return self::$instance;
+    }
+    //! 获取已连接数据库类型
+    public static function getDriverType(): string
+    {
+        return self::$type->value;
+    }
+    //! 打印bool值
+    public static function echo_bool(bool|int $i)
+    {
+        echo $i ? "true" : "false" . PHP_EOL;
     }
 }
