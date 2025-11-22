@@ -50,7 +50,6 @@ abstract class Tools
             "404" => _404_
         ][$code];
     }
-    public static function error_505() {}
     public static $sendGet;
     public static function post_start(string $i)
     {
@@ -59,6 +58,18 @@ abstract class Tools
     public static function get_start(string $i)
     {
         return strtolower(substr($i, 0, 3)) === 'get';
+    }
+    public static function get_post_start(string $i)
+    {
+        return strtolower(substr($i, 0, 8)) === 'get|post';
+    }
+    public static function post_get_start(string $i)
+    {
+        return strtolower(substr($i, 0, 8)) === 'post|get';
+    }
+    public static function echo_bool(bool|int $i)
+    {
+        echo $i ? "true" : "false" . PHP_EOL;
     }
 };
 enum DatabaseType: string
@@ -178,18 +189,56 @@ class Controller
 
 final class Router //路由控制器
 {
-    private array $getRoutes = [];
-    private array $postRoutes = [];
+    /**
+     * 正则get路由存储
+     * @var array
+     */
+    private array $_getRegexRoutes = [];
+    /**
+     * 正则post路由存储
+     * @var array
+     */
+    private array $_postRegexRoutes = [];
+    /**
+     * 页面渲染结果
+     * @var string
+     */
     private string $_page = "";
+    private function templateToPattern(string $url): string
+    {
+        if (\strlen($url) === 0) $url = '/';
+        if ($url[0] !== '/') $url = "/$url";
+
+        // 逐段处理，普通段做 preg_quote，@name 或 {name} 变为 捕获组 ([^/]+)
+        $segments = explode('/', ltrim($url, '/'));
+        $parts = [];
+        foreach ($segments as $seg) {
+            if ($seg === '') {
+                $parts[] = '';
+                continue;
+            }
+            if ($seg[0] === '@') {
+                $parts[] = '([^/]+)';
+            } elseif (preg_match('/^\{[A-Za-z_][A-Za-z0-9_]*\}$/', $seg)) {
+                $parts[] = '([^/]+)';
+            } else {
+                $parts[] = preg_quote($seg, '#');
+            }
+        }
+
+        return '#^/' . implode('/', $parts) . '$#';
+    }
     private function addGetRoutes(string $url, callable|string $fn)
     {
-        if ($url[0] !== '/') $url = "/$url";
-        $this->getRoutes[$url] = $fn;
+        if (\strlen($url) === 0) $url = '/';
+        $pattern = $this->templateToPattern($url);
+        $this->_getRegexRoutes[] = ['pattern' => $pattern, 'handler' => $fn];
     }
     private function addPostRoutes(string $url, callable|string $fn)
     {
-        if ($url[0] !== '/') $url = "/$url";
-        $this->postRoutes[$url] = $fn;
+        if (\strlen($url) === 0) $url = '/';
+        $pattern = $this->templateToPattern($url);
+        $this->_postRegexRoutes[] = ['pattern' => $pattern, 'handler' => $fn];
     }
 
     public function __construct(array $i = [])
@@ -199,25 +248,28 @@ final class Router //路由控制器
 
     public function get(string $url, callable|string $fn)
     {
-        if (\is_string($fn) || \is_callable($fn)) $this->getRoutes[$url] = $fn;
-        else throw new \InvalidArgumentException("Unsupported route handler type for {$url}");
+        if (\is_string($fn) || \is_callable($fn)) $this->addGetRoutes($url, $fn);
+        else throw new \InvalidArgumentException("{$url} error");
         return $this;
     }
 
     public function post(string $url, callable|string $fn)
     {
-        if (\is_string($fn) || \is_callable($fn)) $this->postRoutes[$url] = $fn;
-        else throw new \InvalidArgumentException("Unsupported route handler type for {$url}");
+        if (\is_string($fn) || \is_callable($fn)) $this->addPostRoutes($url, $fn);
+        else throw new \InvalidArgumentException("{$url} error");
         return $this;
     }
     public function define(array $i)
     {
         foreach ($i as $j => $k) {
-            if (\count($k) < 2) continue;
-            if (Tools::get_start($j)) $this->get(trim(substr($j, 3)), $k);
-            if (Tools::post_start($j)) $this->post(trim(substr($j, 4)), $k);
+            if (Tools::get_post_start($j) || Tools::post_get_start($j)) {
+                $this->get(trim(substr($j, 8)), $k);
+                $this->post(trim(substr($j, 8)), $k);
+            } elseif (Tools::get_start($j)) $this->get(trim(substr($j, 3)), $k);
+            elseif (Tools::post_start($j)) $this->post(trim(substr($j, 4)), $k);
             else $this->get($j, $k);
         }
+        return $this;
     }
     /**
      * run启动路由监控
@@ -228,9 +280,25 @@ final class Router //路由控制器
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         $fn = fn() => Tools::error(404);
-        if ($method === 'GET' && isset($this->getRoutes[$current])) $fn = $this->getRoutes[$current];
-        elseif ($method === 'POST' && isset($this->postRoutes[$current])) $fn = $this->postRoutes[$current];
-        $this->_page = \call_user_func($fn);
+        $matches = [];
+        if ($method === 'GET') {
+            foreach (array_reverse($this->_getRegexRoutes) as $r) {
+                if (preg_match($r['pattern'], $current, $m)) {
+                    $fn = $r['handler'];
+                    $matches = $m;
+                    break;
+                }
+            }
+        } elseif ($method === 'POST') {
+            foreach (array_reverse($this->_postRegexRoutes) as $r) {
+                if (preg_match($r['pattern'], $current, $m)) {
+                    $fn = $r['handler'];
+                    $matches = $m;
+                    break;
+                }
+            }
+        }
+        $this->_page = \call_user_func_array($fn, \array_slice($matches, 1));
         echo $this;
     }
     /**

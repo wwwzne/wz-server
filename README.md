@@ -1,4 +1,4 @@
-# server
+# wzServer
 
 wwwzne的轻量服务器框架
 
@@ -26,40 +26,41 @@ $Wz_config->connect()
 
 ### 创建Router类
 
-无参数创建
+* 无参数创建
 
 ```php
 $router = new Router;
 $router->run();
 ```
 
-带参数创建
+* 带参数创建
 
 ```php
-$router = new Router([
-    "GET/" => [$h, 'run'],
-    "POST/" => [$h, 'index']
-]);
+$router = new Router([ "GET/" => [$h, 'run'] ]);
 // 等效于
 $router = new Router;
-$router->define([
-    "GET/" => [$h, 'run'],
-    "POST/" => [$h, 'index']
-])
-$router->run();
+$router->define([ "GET/" => [$h, 'run'] ])->run();
+```
+
+### 路由字符串
+
+```php
+$router->define([ "GET/" => [$h, 'run'] ]);
+$router->define([ "get/" => [$h, 'run'] ]);
+$router->define([ "GET" => [$h, 'run'] ]);
+$router->define([ "POST/" => [$h, 'run'] ]);
+$router->define([ "post/" => [$h, 'run'] ]);
+$router->define([ "post" => [$h, 'run'] ]);
+$router->define([ "GET|POST/" => [$h, 'run'] ]);
+$router->define([ "get|post/" => [$h, 'run'] ]);
+$router->define([ "POST|GET/" => [$h, 'run'] ]);
+$router->define([ "post|get/" => [$h, 'run'] ]);
+$router->define([ "get/[0-9]" => [$h, 'run'] ]);
+$router->define([ "get/@name/@id" => [$h, 'run'] ])
+$router->define([ "get/{name}/{id}" => [$h, 'run'] ])
 ```
 
 ### get请求监控
-
-```php
-$router->get(url, fn);
-```
-
-参数为正则字符串
-
-```php
-
-```
 
 参数为函数名
 
