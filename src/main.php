@@ -41,37 +41,82 @@ const _404_ = <<<HTML
 </body>
 </html>
 HTML;
-
 abstract class Tools
 {
+    /*返回错误页面*/
     public static function error(int $code)
     {
         return [
             "404" => _404_
         ][$code];
     }
-    public static $sendGet;
+    /*发送http-get请求*/
+    public static function httpGet(string $url): string
+    {
+        $url = trim($url);
+        $opts = ['http' => ['method' => 'GET', 'timeout' => 10]];
+        $context = stream_context_create($opts);
+        $body = @file_get_contents($url, false, $context);
+        return $body === false ? '' : htmlentities($body);
+    }
+    /*发送http-post请求*/
+    public static function httpPost(string $url, array $data = [], array $headers = []): string
+    {
+        $url = trim($url);
+
+        $content =  http_build_query($data);
+        $hdrs = [
+            'User-Agent: WzServer/1.0',
+            'Content-Type: application/x-www-form-urlencoded',
+            'Content-Length: ' . \strlen($content),
+        ];
+        foreach ($headers as $k => $v) $hdrs[] = \is_int($k) ? $v : "{$k}: {$v}";
+        $opts = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => implode("\r\n", $hdrs) . "\r\n",
+                'content' => $content,
+                'timeout' => 10,
+            ],
+        ];
+        $context = stream_context_create($opts);
+        $body = @file_get_contents($url, false, $context);
+        return $body === false ? '' : htmlentities($body);
+    }
+    /*判断字符串开头是否为post*/
     public static function post_start(string $i)
     {
+        if (\strlen($i) < 4) return false;
         return strtolower(substr($i, 0, 4)) === "post";
     }
+    /*判断字符串开头是否为get*/
     public static function get_start(string $i)
     {
+        if (\strlen($i) < 3) return false;
         return strtolower(substr($i, 0, 3)) === 'get';
     }
+    /*判断字符串开头是否为get|post*/
     public static function get_post_start(string $i)
     {
+        if (\strlen($i) < 8) return false;
         return strtolower(substr($i, 0, 8)) === 'get|post';
     }
+    /*判断字符串开头是否为post|get*/
     public static function post_get_start(string $i)
     {
+        if (\strlen($i) < 8) return false;
         return strtolower(substr($i, 0, 8)) === 'post|get';
     }
+
+    /*打印bool值*/
     public static function echo_bool(bool|int $i)
     {
         echo $i ? "true" : "false" . PHP_EOL;
     }
 };
+/**
+ * 数据库类型枚举
+ */
 enum DatabaseType: string
 {
     case MYSQL  = 'mysql';
@@ -136,8 +181,6 @@ $Wz_config = new class {
         return $this->type->value;
     }
 };
-
-
 final class Model
 {
     public string $tableName = "";
@@ -160,7 +203,6 @@ final class Model
     }
     public function query() {}
 }
-
 final class View
 {
     private string $_page = "";
@@ -178,7 +220,6 @@ final class View
         return (string) ob_get_clean();
     }
 }
-
 class Controller
 {
     final protected function render(string $template, array $data = [])
@@ -186,7 +227,6 @@ class Controller
         return new View($template)->render($data);
     }
 }
-
 final class Router //路由控制器
 {
     /**

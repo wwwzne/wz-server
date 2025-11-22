@@ -8,6 +8,20 @@ wwwzne的轻量服务器框架
 composer require wwwzne/wz-server
 ```
 
+## 主要模块
+
+1. 初始化对象Wz_config
+2. 路由控制器Route
+3. 数据库模型Modal
+4. 视图及其控制器Controller
+5. 工具函数集合Tools
+6. 图像处理对象(待做)
+7. JSON转译器(待做)
+8. 注解与文档注释(待做)
+9. 文件上传(待做)
+10. 实时通信(待做)
+11. 日志管理(待做)
+
 ## 数据库连接
 
 ```php
