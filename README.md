@@ -1,2 +1,116 @@
 # server
+
 wwwzne的轻量服务器框架
+
+## 安装与引入
+
+```shell
+composer require wwwzne/wz-server
+```
+
+## 数据库连接
+
+```php
+/*
+参数 string $name 数据库名
+参数 DatabaseType $type 数据库类型
+参数 mixed $dsn 数据库链接信息
+参数 mixed $user 用户名
+参数 mixed $psw 密码
+返回值 PDO对象实例
+*/
+$Wz_config->connect()
+```
+
+## 路由控制器
+
+### 创建Router类
+
+无参数创建
+
+```php
+$router = new Router;
+$router->run();
+```
+
+带参数创建
+
+```php
+$router = new Router([
+    "GET/" => [$h, 'run'],
+    "POST/" => [$h, 'index']
+]);
+// 等效于
+$router = new Router;
+$router->define([
+    "GET/" => [$h, 'run'],
+    "POST/" => [$h, 'index']
+])
+$router->run();
+```
+
+### get请求监控
+
+```php
+$router->get(url, fn);
+```
+
+参数为正则字符串
+
+```php
+
+```
+
+参数为函数名
+
+```php
+function test()
+{
+    return "<h1 align='center'>holle world</h1>";
+};
+$router->get("/", "test");
+```
+
+参数为匿名函数
+
+```php
+$test= function()
+{
+    return "<h1 align='center'>holle world</h1>";
+};
+$router->get("/", $test);
+```
+
+参数为类回调函数
+
+```php
+$router->get("/", [
+    new class{
+        public function a(){}
+    },
+    'a'
+]);
+```
+
+### post请求监控
+
+```php
+
+```
+
+## MVC模式
+
+modal: 模型代表一个存取数据的对象
+view: 视图代表模型包含的数据的可视化
+control: 控制器控制模型数据作用于视图
+
+```php
+$data = new Model("test"); 
+$h = new class extends Controller {
+    public function index()
+    {
+        return $this->render('<?= $a ?>', ["a" => 1]);
+    }
+};
+// 数据模型->继承并实现控制器类(内置render函数负责渲染视图)->绑定路由->页面输出
+```
