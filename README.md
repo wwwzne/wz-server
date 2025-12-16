@@ -83,7 +83,7 @@ function test()
 {
     return "<h1 align='center'>holle world</h1>";
 };
-$router->get("/", "test");
+$router->get("/", "tests");
 ```
 
 参数为匿名函数
@@ -120,7 +120,7 @@ view: 视图代表模型包含的数据的可视化
 control: 控制器控制模型数据作用于视图
 
 ```php
-$data = new Model("test"); 
+$data = new Model("tests"); 
 $h = new class extends Controller {
     public function index()
     {
