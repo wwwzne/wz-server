@@ -10,122 +10,77 @@ composer require wwwzne/wz-server
 
 ## 主要模块
 
-1. 初始化对象Wz_config
-2. 路由控制器Route
-3. 数据库模型Modal
-4. 视图及其控制器Controller
-5. 工具函数集合Tools
-6. 图像处理对象(待做)
-7. JSON转译器(待做)
-8. 注解与文档注释(待做)
-9. 文件上传(待做)
-10. 实时通信(待做)
-11. 日志管理(待做)
+1. 主要对象wzServer(路由管理已完成)
+2. 工具函数集合utils
+3. 图像处理对象(待做)
+4. JSON转译器(待做)
+5. 注解与文档注释(待做)
+6. 文件上传(待做)
+7. 实时通信(待做)
+8. 日志管理(待做)
 
-## 数据库连接
+## 路由表设置
 
 ```php
-/*
-参数 string $name 数据库名
-参数 DatabaseType $type 数据库类型
-参数 mixed $dsn 数据库链接信息
-参数 mixed $user 用户名
-参数 mixed $psw 密码
-返回值 PDO对象实例
-*/
-$Wz_config->connect()
+wzServer::defind(["/" => fn() => "a"])
+wzServer::define([ "GET/" => [$h, 'run'] ]);
+wzServer::define([ "get/" => [$h, 'run'] ]);
+wzServer::define([ "GET" => [$h, 'run'] ]);
+wzServer::define([ "POST/" => [$h, 'run'] ]);
+wzServer::define([ "post/" => [$h, 'run'] ]);
+wzServer::define([ "post" => [$h, 'run'] ]);
+wzServer::define([ "GET|POST/" => [$h, 'run'] ]);
+wzServer::define([ "get|post/" => [$h, 'run'] ]);
+wzServer::define([ "POST|GET/" => [$h, 'run'] ]);
+wzServer::define([ "post|get/" => [$h, 'run'] ]);
+wzServer::define([ "get/[0-9]" => [$h, 'run'] ]);
+wzServer::define([ "get/@name/@id" => [$h, 'run'] ])
+wzServer::define([ "get/{name}/{id}" => [$h, 'run'] ])
+WzServer::run();
 ```
 
-## 路由控制器
-
-### 创建Router类
-
-* 无参数创建
+## 设置get请求
 
 ```php
-$router = new Router;
-$router->run();
-```
-
-* 带参数创建
-
-```php
-$router = new Router([ "GET/" => [$h, 'run'] ]);
-// 等效于
-$router = new Router;
-$router->define([ "GET/" => [$h, 'run'] ])->run();
-```
-
-### 路由字符串
-
-```php
-$router->define([ "GET/" => [$h, 'run'] ]);
-$router->define([ "get/" => [$h, 'run'] ]);
-$router->define([ "GET" => [$h, 'run'] ]);
-$router->define([ "POST/" => [$h, 'run'] ]);
-$router->define([ "post/" => [$h, 'run'] ]);
-$router->define([ "post" => [$h, 'run'] ]);
-$router->define([ "GET|POST/" => [$h, 'run'] ]);
-$router->define([ "get|post/" => [$h, 'run'] ]);
-$router->define([ "POST|GET/" => [$h, 'run'] ]);
-$router->define([ "post|get/" => [$h, 'run'] ]);
-$router->define([ "get/[0-9]" => [$h, 'run'] ]);
-$router->define([ "get/@name/@id" => [$h, 'run'] ])
-$router->define([ "get/{name}/{id}" => [$h, 'run'] ])
-```
-
-### get请求监控
-
-参数为函数名
-
-```php
+// 函数回调
 function test()
 {
     return "<h1 align='center'>holle world</h1>";
 };
-$router->get("/", "tests");
-```
-
-参数为匿名函数
-
-```php
+wzServer::get("/", "tests");
+// 匿名函数回调
 $test= function()
 {
     return "<h1 align='center'>holle world</h1>";
 };
-$router->get("/", $test);
-```
-
-参数为类回调函数
-
-```php
-$router->get("/", [
+wzServer::get("/", $test);
+// 类回调函数
+wzServer::get("/", [
     new class{
         public function a(){}
-    },
-    'a'
+    },'a'
 ]);
 ```
 
-### post请求监控
+## 设置post请求
 
 ```php
-
-```
-
-## MVC模式
-
-modal: 模型代表一个存取数据的对象
-view: 视图代表模型包含的数据的可视化
-control: 控制器控制模型数据作用于视图
-
-```php
-$data = new Model("tests"); 
-$h = new class extends Controller {
-    public function index()
-    {
-        return $this->render('<?= $a ?>', ["a" => 1]);
-    }
+// 函数回调
+function test()
+{
+    return "<h1 align='center'>holle world</h1>";
 };
-// 数据模型->继承并实现控制器类(内置render函数负责渲染视图)->绑定路由->页面输出
+wzServer::post("/", "tests");
+// 匿名函数回调
+$test= function()
+{
+    return "<h1 align='center'>holle world</h1>";
+};
+wzServer::post("/", $test);
+// 类回调函数
+wzServer::post("/", [
+    new class{
+        public function a(){}
+    },'a'
+]);
 ```

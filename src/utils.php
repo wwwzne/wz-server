@@ -2,6 +2,7 @@
 
 namespace Wwwzne\WzServer;
 
+
 final class utils
 {
     public/*判断字符串开头是否为post*/ static function post_start(string $i): bool { return !(\strlen($i) < 4) && strtolower(substr($i, 0, 4)) === "post"; }
@@ -12,7 +13,7 @@ final class utils
 
     public/*判断字符串开头是否为post|get*/ static function post_get_start(string $i): bool { return !(\strlen($i) < 8) && strtolower(substr($i, 0, 8)) === 'post|get'; }
 
-    public/*打印bool值*/ static function echo_bool(bool|int $i): void { echo $i ? "true" : "false" . PHP_EOL; }
+    public/*打印bool值*/ static function echo_bool(bool|int $i): void { echo ($i ? "true" : "false") . PHP_EOL; }
 
     public/*http-get请求*/ static function http_get(string $url): string
     {
@@ -33,7 +34,7 @@ final class utils
             'Content-Type: application/x-www-form-urlencoded',
             'Content-Length: ' . \strlen($content),
         ];
-        foreach ($headers as $k => $v) $hdrs[] = \is_int($k) ? $v : "{$k}: {$v}";
+        foreach ($headers as $k => $v) $hdrs[] = \is_int($k) ? $v : "$k: $v";
         $opts = [
             'http' => [
                 'method' => 'POST',
