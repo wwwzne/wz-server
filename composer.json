@@ -26,5 +26,8 @@
     "allow-plugins": {
       "pestphp/pest-plugin": true
     }
+  },
+  "scripts": {
+    "test": "php -S localhost:8080 ./tests/test.php"
   }
 }

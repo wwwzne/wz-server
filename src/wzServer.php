@@ -58,6 +58,9 @@ final class wzServer
     </body>
     </html>
     HTML;
+    /*静态资源*/
+    private static ?string $static = null;
+
 
     private/*模式匹配*/ static function templateToPattern(string $url): string
     {
@@ -118,10 +121,63 @@ final class wzServer
         }
     }
 
+    public/*静态路由*/ static function setStatic(string $path)
+    {
+        self::$static = $path;
+    }
+
     public/*启动路由监控*/ static function run(): void
     {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+        if (self::$static and str_starts_with($current, self::$static)) {
+            $path = dirname($_SERVER['SCRIPT_FILENAME']) . $current;
+            if (is_file($path)) {
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                $mime = [
+                    // 图片
+                    'png' => 'image/png',
+                    'jpg' => 'image/jpeg',
+                    'jpeg' => 'image/jpeg',
+                    'gif' => 'image/gif',
+                    'webp' => 'image/webp',
+                    'svg' => 'image/svg+xml',
+                    'ico' => 'image/x-icon',
+                    'bmp' => 'image/bmp',
+                    // 样式/脚本
+                    'css' => 'text/css',
+                    'js' => 'application/javascript',
+                    'mjs' => 'application/javascript',
+                    // 字体
+                    'woff' => 'font/woff',
+                    'woff2' => 'font/woff2',
+                    'ttf' => 'font/ttf',
+                    'otf' => 'font/otf',
+                    // 文档/数据
+                    'html' => 'text/html; charset=utf-8',
+                    'htm' => 'text/html; charset=utf-8',
+                    'txt' => 'text/plain; charset=utf-8',
+                    'json' => 'application/json',
+                    'xml' => 'application/xml',
+                    'pdf' => 'application/pdf',
+                    // 音频/视频
+                    'mp3' => 'audio/mpeg',
+                    'wav' => 'audio/wav',
+                    'ogg' => 'audio/ogg',
+                    'mp4' => 'video/mp4',
+                    'webm' => 'video/webm',
+                    'mov' => 'video/quicktime',
+                    // 压缩包
+                    'zip' => 'application/zip',
+                    'gz' => 'application/gzip',
+                    'tar' => 'application/x-tar',
+                ];
+                header('Content-Type: ' . ($mime[$ext] ?? 'application/octet-stream'));
+                header('Content-Length: ' . filesize($path));
+                readfile($path);
+            } else echo self::$_404;
+            exit;
+        }
         $fn = fn() => self::$_404;
         $matches = [];
         if ($method === 'GET') {

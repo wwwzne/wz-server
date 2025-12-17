@@ -3,6 +3,7 @@ require_once(__DIR__ . "/../src/wzServer.php");
 
 use Wwwzne\WzServer\wzServer;
 
+wzServer::setStatic('/static');
 wzServer::define([
     "/" => fn() => "a",
     "/a" => fn() => "b",
