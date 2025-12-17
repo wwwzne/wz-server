@@ -128,7 +128,7 @@ final class wzServer
 
     public/*启动路由监控*/ static function run(): void
     {
-        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+        $method = $_SERVER['DOCUMENT_ROOT'] ?? 'GET';
         $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         if (self::$static and str_starts_with($current, self::$static)) {
             $path = dirname($_SERVER['SCRIPT_FILENAME']) . $current;
