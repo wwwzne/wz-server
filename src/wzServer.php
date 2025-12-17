@@ -128,10 +128,10 @@ final class wzServer
 
     public/*启动路由监控*/ static function run(): void
     {
-        $method = $_SERVER['DOCUMENT_ROOT'] ?? 'GET';
+        $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         if (self::$static and str_starts_with($current, self::$static)) {
-            $path = dirname($_SERVER['SCRIPT_FILENAME']) . $current;
+            $path = dirname($_SERVER['DOCUMENT_ROOT']) . $current;
             if (is_file($path)) {
                 $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
                 $mime = [
