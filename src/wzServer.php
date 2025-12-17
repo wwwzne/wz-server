@@ -131,7 +131,7 @@ final class wzServer
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $current = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         if (self::$static and str_starts_with($current, self::$static)) {
-            $path = dirname($_SERVER['DOCUMENT_ROOT']) . $current;
+            $path = $_SERVER['DOCUMENT_ROOT'] . $current;
             if (is_file($path)) {
                 $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
                 $mime = [
